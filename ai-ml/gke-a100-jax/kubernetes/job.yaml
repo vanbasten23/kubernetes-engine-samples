@@ -27,7 +27,7 @@ spec:
       restartPolicy: Never
       containers:
       - name: jax-worker
-        image: gcr.io/<<PROJECT>>/jax/hello:latest
+        image: gcr.io/tpu-pytorch/jax/hello:latest
         command: ["python", "train.py"]
         args:
         - --num_processes

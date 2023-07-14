@@ -26,7 +26,8 @@ patches:
 - patch: |-
     - op: replace
       path: /spec/completions
-      value: 32
+        # xw32: change here.
+      value: 8
     - op: replace
       path: /metadata/name
       value: jax-hello-world
@@ -34,14 +35,15 @@ patches:
       path: /spec/template/spec/nodeSelector
       value: 
          cloud.google.com/gke-accelerator: 
-           nvidia-a100-80gb
+           # xw32: change here
+           nvidia-tesla-v100
   target:
     kind: Job
     version: v1
 
 images:
-- name: gcr.io/<<PROJECT>>/jax/hello:latest
-  newName: gcr.io/<<PROJECT>>/jax/hello
+- name: gcr.io/tpu-pytorch/jax/hello:latest
+  newName: gcr.io/tpu-pytorch/jax/hello
   newTag: latest
 
 replacements:
