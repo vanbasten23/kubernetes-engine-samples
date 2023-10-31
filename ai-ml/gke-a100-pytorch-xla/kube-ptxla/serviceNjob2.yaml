@@ -1,0 +1,41 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: headless-svc
+  namespace: default
+spec:
+  clusterIP: None
+  selector:
+    job-name: ptxla-hello-world
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ptxla-hello-world
+  namespace: default
+spec:
+  backoffLimit: 1
+  completionMode: Indexed
+  completions: 2 # xw32 todo: change to 4
+  parallelism: 2 # xw32 todo: change to 4
+  template:
+    spec:
+      nodeSelector:
+        cloud.google.com/gke-accelerator: nvidia-tesla-v100
+      restartPolicy: Never
+      subdomain: headless-svc
+      tolerations:
+      - key: "nvidia.com/gpu"
+        operator: "Exists"
+        effect: "NoSchedule"
+      containers:
+      - name: ptxla-worker
+        image: us-central1-docker.pkg.dev/tpu-pytorch-releases/docker/xla:r2.1.0_3.10_cuda_12.1 
+        command: ["/bin/bash", "-c", "--"]
+        args: ["sleep 1800"]
+        # args: ["cd /data/tensorflow-mnist-example; pip install -r requirements.txt; python tensorflow_mnist_train_distributed.py"]
+        ports:
+        - containerPort: 1234
+        resources:
+          limits:
+            nvidia.com/gpu: 2
