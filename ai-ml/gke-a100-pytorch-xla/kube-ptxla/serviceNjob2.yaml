@@ -16,8 +16,8 @@ metadata:
 spec:
   backoffLimit: 1
   completionMode: Indexed
-  completions: 2 # xw32 todo: change to 4
-  parallelism: 2 # xw32 todo: change to 4
+  completions: 4 # xw32 todo: change to numNodes
+  parallelism: 4 # xw32 todo: change to numNodes
   template:
     spec:
       nodeSelector:
@@ -31,10 +31,26 @@ spec:
       containers:
       - name: ptxla-worker
         image: us-central1-docker.pkg.dev/tpu-pytorch-releases/docker/xla:nightly_3.8_cuda_12.1
-        # image: gcr.io/tpu-pytorch/myptxla/hello:latest
-        command: ["/bin/bash", "-c", "--"]
-        # args: ["sleep 3600"]
-        args: ["export PATH=/usr/local/nvidia/bin${PATH:+:${PATH}}; export LD_LIBRARY_PATH=/usr/local/nvidia/lib64:/usr/local/nvidia/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}; while true; do ip=$(getent hosts ptxla-hello-world-0.headless-svc | awk {'print $1'}); if [ $? -eq 0 ] && [ \"${ip}\" != \"\" ]; then break; else sleep 10; fi; done; echo $ip; git clone https://github.com/pytorch/xla.git; PJRT_DEVICE=CUDA torchrun --nnodes=2 --node_rank=$JOB_COMPLETION_INDEX --nproc_per_node=2 --rdzv_endpoint=$ip:12355 xla/test/test_train_mp_imagenet.py  --fake_data --pjrt_distributed --batch_size=128 --num_epochs=1"]
+        command: ["/bin/bash"]
+        args:
+          - -c
+          - |
+            export PATH=/usr/local/nvidia/bin${PATH:+:${PATH}}
+            export LD_LIBRARY_PATH=/usr/local/nvidia/lib64:/usr/local/nvidia/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
+            
+            while true
+            do
+              ip=$(getent hosts ptxla-hello-world-0.headless-svc | awk {'print $1'})
+              if [ $? -eq 0 ] && [ \"${ip}\" != \"\" ]
+              then
+                break
+              else sleep 10;
+              fi
+            done
+            echo $ip
+            
+            git clone https://github.com/pytorch/xla.git
+            PJRT_DEVICE=CUDA torchrun --nnodes=4 --node_rank=$JOB_COMPLETION_INDEX --nproc_per_node=2 --rdzv_endpoint=$ip:12355 xla/test/test_train_mp_imagenet.py  --fake_data --pjrt_distributed --batch_size=128 --num_epochs=1
         ports:
         - containerPort: 1234
         resources:
